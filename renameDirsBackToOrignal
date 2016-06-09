@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+import codecs
+import hashlib
+import sys
+import json
+from os import listdir, rename
+from os.path import isdir, join
+
+mypath = sys.argv[1]
+onlydirs = [join(mypath, f) for f in listdir(mypath) if isdir(join(mypath, f))]
+
+for d in onlydirs:
+  p = join(d, 'data.json')
+  print "load %s" % (p)
+  try:
+    f = codecs.open(p, 'r', 'utf-8') 
+    data = json.load(f)
+    #m = hashlib.md5()
+    #m.update(data['permalink_post_url'])
+    #newpath = join(mypath, m.hexdigest())
+    newpath = join(mypath, data['post_id'])
+    print "rename %s as %s" % (d, newpath)
+    rename(d, newpath)
+  except Exception, e:
+    print "skipping %s: %s" % (p, str(e))
+
