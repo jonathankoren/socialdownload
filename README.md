@@ -2,7 +2,7 @@ Requires a file called secrets.py which is not included.
 
 It should contain your API and access tokens. It's format is:
 
-...
+```python
 app_keys = {
   'pocket': {
      'consumer_key': '',    # some key
@@ -33,4 +33,4 @@ access_keys = {
     },
   },
 }
-...
+```
