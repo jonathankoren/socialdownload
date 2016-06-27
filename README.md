@@ -4,9 +4,9 @@ We're suck using python 2.7 because of pytumblr .
 
 ## Packages
 
-pocket
-python-twitter
-pytumblr
+* pocket
+* python-twitter
+* pytumblr
 
 # Install
 Requires a file called secrets.py which is not included.
