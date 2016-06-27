@@ -1,5 +1,14 @@
+# Requirements
+
 We're suck using python 2.7 because of pytumblr .
 
+## Packages
+
+pocket
+python-twitter
+pytumblr
+
+# Install
 Requires a file called secrets.py which is not included.
 
 It should contain your API and access tokens. It's format is:
