@@ -63,7 +63,12 @@ while True:
     i = i + 1
     os_path = PATH + '/tumblr/' + str(cur_post['id'])
     try:
-      os.makedirs(os_path)
+      try:
+        os.makedirs(os_path)
+      except:
+        # Re-use directories that already exist.
+        if not os.path.isdir(os_path):
+          raise
       post_data = {}
       post_data[u'site'] = u'tumblr'
       post_data[u'post_id'] = unicode(cur_post['id'])
