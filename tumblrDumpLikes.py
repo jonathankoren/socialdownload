@@ -93,8 +93,10 @@ while True:
       f = open(os_path + '/data.json', 'w')
       f.write(json.dumps(post_data).encode('utf8'))
       f.close()
+    except OSError as err:
+      print("\tskipping because an OS error occurred: {0}".format(err))
     except:
-      print "\tskipping"
+      print("\tskipping because: ", sys.exc_info()[0])
 
   if (offset + len(likes['liked_posts'])) >= num_likes:
     print "stopping because " + str(offset + limit) + " >= " + str(num_likes)
