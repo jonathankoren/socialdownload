@@ -1,6 +1,6 @@
 # Requirements
 
-We're suck using python 2.7 because of pytumblr .
+We're stuck using python 2.7 because of pytumblr .
 
 ## Packages
 
