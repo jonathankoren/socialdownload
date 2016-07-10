@@ -29,9 +29,8 @@ app_keys = {
 }
 
 access_keys = {
-  'jonathankoren' : {	    # a specific account. You can change this, but
-                            # you'd have to modifiy the code as well.
-    'pocket': {
+  'account_login' : {	      # a specific account login
+    'pocket': {             # providers associated with the account
        'access_token': '',  # some key
     },
     'tumblr' : {
