@@ -43,7 +43,7 @@ for k in favs[0]['list'].keys():
       if toks[i] == 'status':
         tweet = tapi.GetStatus(toks[i + 1])
         for m in tweet.media:
-          url = m['media_url_https'] + ':large'
+          url = m.media_url_https + ':large'
           print 'tumblr ' + str(fav['item_id']) + ' ' + url + ' ' + fav['resolved_title']
           tumblr.create_photo(tumblr_blogname, state='published', format='markdown', caption=unicode(fav['resolved_title']), source=url)
     p.unfavorite(fav['item_id'])

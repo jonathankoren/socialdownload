@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-from pprint import pprint
+# Removes Pocket entries that don't actually contain a URL.
+
 import pocket
-import pytumblr
 import re
 import secrets
 import sys
-import twitter
 import urllib2
 
 for login, serviceData in secrets.access_keys.items():
