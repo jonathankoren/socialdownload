@@ -32,20 +32,23 @@ p = pocket.Pocket(
   secrets.access_keys['jonathankoren']['pocket']['access_token']
 )
 
-favs = p.get(sort='newest', favorite=1, offset=0, count=1000)
+favs = p.get(sort='newest', offset=0, count=1000)
 for k in favs[0]['list'].keys():
   fav = favs[0]['list'][k]
-  if (fav['resolved_title'][0:21] == 'Archillect on Twitter') or \
-     (fav['resolved_title'][0:28] == 'FLICTERIA NOIR... on Twitter') or \
-     (fav['resolved_title'][0:15] == 'PEXa on Twitter'):
+  if ('resolved_url' in fav) and ('twitter.com/' in fav['resolved_url']):
     toks = fav['resolved_url'].split('/')
     for i in xrange(len(toks)):
       if toks[i] == 'status':
-        tweet = tapi.GetStatus(toks[i + 1])
-        for m in tweet.media:
-          url = m.media_url_https + ':large'
-          print 'tumblr ' + str(fav['item_id']) + ' ' + url + ' ' + fav['resolved_title']
-          tumblr.create_photo(tumblr_blogname, state='published', format='markdown', caption=unicode(fav['resolved_title']), source=url)
+        try:
+          tweet = tapi.GetStatus(toks[i + 1])
+          if tweet.media is not None:
+            for m in tweet.media:
+              url = m.media_url_https + ':large'
+              print 'tumblr ' + str(fav['item_id']) + ' ' + url + ' ' + fav['resolved_title']
+              tumblrCaption = unicode(fav['resolved_title']) + u"\n" + unicode(tweet.text) + u"\n" + unicode(fav['resolved_url'])
+              tumblr.create_photo(tumblr_blogname, state='published', format='markdown', caption=str(tumblrCaption), source=url)
+        except twitter.TwitterError as e:
+          print unicode('failed to download ') + unicode(fav['resolved_url']) + unicode(' ') + unicode(e.message)
     p.unfavorite(fav['item_id'])
     p.archive(fav['item_id'])
     p.commit()

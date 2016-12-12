@@ -4,7 +4,6 @@ import secrets
 
 import twitter
 
-
 for login, serviceData in secrets.access_keys.items():
   if 'twitter' in serviceData:
     api = twitter.Api(
