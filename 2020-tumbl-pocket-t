@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+
+import pocket
+import pytumblr
+import twitter
+
+import secrets
+
+TUMBLR_BLOGNAME = 'robotmonkeys-net'
+POCKET_TAG = 't'
+
+###############################################################################
+
+tumblr = pytumblr.TumblrRestClient(
+  secrets.app_keys['tumblr']['consumer_key'],
+  secrets.app_keys['tumblr']['consumer_secret'],
+  secrets.access_keys['jonathankoren']['tumblr']['access_token'],
+  secrets.access_keys['jonathankoren']['tumblr']['access_secret']
+)
+
+tapi = twitter.Twitter(
+    auth=twitter.OAuth(
+        secrets.access_keys['jonathankoren']['twitter']['access_token'],
+        secrets.access_keys['jonathankoren']['twitter']['access_secret'],
+        secrets.app_keys['twitter']['consumer_key'],
+        secrets.app_keys['twitter']['consumer_secret']))
+
+pkt = pocket.Pocket(
+  secrets.app_keys['pocket']['consumer_key'],
+  secrets.access_keys['jonathankoren']['pocket']['access_token']
+)
+
+###############################################################################
+
+def get_url(pocketed_item):
+    url = pocketed_item.get('resolved_url', '')
+    if url == '':
+        return pocketed_item.get('given_url', '')
+    return url
+
+def get_embedded_twitter_images(tweet):
+    images = []
+    if tweet.get('extended_entities', {}).get('media') is not None:
+        for m in tweet['extended_entities']['media']:
+            if 'video_info' in m:
+                vidurl = m['video_info']['variants'][0]['url']
+                print(f'skipping video (mp4ed gif?) at {vidurl}')
+                continue
+        for m in tweet['extended_entities']['media']:
+            if 'ext_tw_video_thumb' in m['media_url_https']:
+                print('skipping video thumbnail')
+                continue
+            image_url = m['media_url_https'] + ':large'
+            images.append(image_url)
+            print(f'found image at {image_url}')
+    else:
+        print('no images found')
+    return images
+
+def handle_twitter(pocketed_item):
+    url = get_url(pocketed_item)
+    toks = url.split('/')
+    i = None
+    for i in range(len(toks)):
+        if toks[i] == 'status':
+            break
+    tweet_id = toks[i + 1]
+    if '?' in tweet_id:
+        tweet_id = tweet_id[:tweet_id.index('?')]
+    tweet_id = int(tweet_id)
+
+    caption = ''
+    images = []
+    error = False
+    try:
+        print(url)
+        print(tweet_id)
+        tweet = tapi.statuses.show(id=tweet_id, tweet_mode='extended')
+        images = get_embedded_twitter_images(tweet)
+        caption = f"{pocketed_item['resolved_title']}<br/>\n"
+        if 'text' in tweet:
+            caption = tweet['text']
+        elif 'full_text' in tweet:
+            caption = tweet['full_text']
+        caption += f"<br/>\n{pocketed_item['resolved_url']}"
+    except twitter.TwitterError:
+        print(f'failed to download {url}')
+        error = True
+
+    return (caption, images, error)
+
+def handle_tumblr(pocketed_item):
+    resolved_url = pocketed_item.get('resolved_url', '')
+    #print(f'TUMBLR {resolved_url}'')
+    caption = ''
+    images = []
+    error = False
+    return (caption, images, error)
+
+def handle_default(pocketed_item):
+    resolved_url = pocketed_item.get('resolved_url', '')
+    #print(f'DEFAULT {resolved_url}')
+    #print(pocketed_item)
+    caption = ''
+    images = []
+    error = False
+    return (caption, images, error)
+
+############################################################################
+
+if __name__ == '__main__':
+    pocketed_items = pkt.get(sort='newest', tag=POCKET_TAG, detailType='complete')
+    for (item_id, pocketed_item) in pocketed_items[0]['list'].items():
+        resolved_url = get_url(pocketed_item)
+        caption = ''
+        images = []
+        error = False
+        if resolved_url is '':
+            print("\n-------------------------------------")
+            print(item_id)
+            print(pocketed_item)
+            print(get_url(pocketed_item))
+        elif 'twitter.com' in resolved_url:
+            (caption, images, error) = handle_twitter(pocketed_item)
+        elif 'tumblr.com' in resolved_url:
+            (caption, images, error) = handle_tumblr(pocketed_item)
+        else:
+            (caption, images, error) = handle_default(pocketed_item)
+        if error:
+            pkt.archive(item_id)
+            continue
+        if len(images) > 0:
+            print(images)
+            all_succeeded = True
+            for image in images:
+                status = tumblr.create_photo(TUMBLR_BLOGNAME, state='published', format='markdown', caption=caption, source=image)
+                print(status)
+            if status.get('meta', {'status': 200}).get('status', 0) != 200:
+                all_succeeded = False
+            if all_succeeded:
+                pkt.tags_remove(item_id, POCKET_TAG)
+                if len(pocketed_item['tags']) == 1:
+                    pkt.archive(item_id)
+                pkt.commit()
